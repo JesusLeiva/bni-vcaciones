@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vacaciones BNI 2026</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #f0f2f5; color: #1a1a2e; min-height: 100vh; }
+
+  header { background: #1B2A4A; color: white; padding: 1rem 1.5rem; display: flex; align-items: center; gap: 1rem; }
+  header h1 { font-size: 1.25rem; font-weight: 600; }
+  header p { font-size: 0.8rem; opacity: 0.7; margin-top: 2px; }
+  .header-badge { background: #E8711A; color: white; font-size: 0.7rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+  .sync-status { margin-left: auto; font-size: 0.72rem; opacity: 0.8; display: flex; align-items: center; gap: 6px; }
+  .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; }
+  .sync-dot.offline { background: #f87171; }
+  .sync-dot.syncing { background: #fbbf24; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .layout { display: flex; min-height: calc(100vh - 60px); }
+
+  .sidebar { width: 260px; min-width: 260px; background: white; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; }
+  .sidebar-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #6b7280; padding: 1rem 1rem 0.5rem; }
+  .member-list { flex: 1; overflow-y: auto; }
+  .member-item { display: flex; align-items: center; gap: 10px; padding: 0.55rem 1rem; cursor: pointer; border-left: 3px solid transparent; transition: background 0.15s; }
+  .member-item:hover { background: #f8fafc; }
+  .member-item.active { background: #eff6ff; border-left-color: #1B2A4A; }
+  .member-avatar { width: 32px; height: 32px; border-radius: 50%; background: #1B2A4A; color: white; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; flex-shrink: 0; }
+  .member-name { flex: 1; min-width: 0; }
+  .member-name strong { display: block; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .member-name span { font-size: 0.68rem; color: #6b7280; }
+  .member-dots { display: flex; gap: 3px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #e2e8f0; }
+  .dot.filled { background: #E8711A; }
+
+  .main { flex: 1; overflow-y: auto; padding: 1.5rem; }
+
+  .person-header { background: white; border-radius: 10px; padding: 1rem 1.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .person-avatar-lg { width: 48px; height: 48px; border-radius: 50%; background: #1B2A4A; color: white; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700; }
+  .person-info h2 { font-size: 1rem; font-weight: 700; }
+  .person-info p { font-size: 0.78rem; color: #6b7280; margin-top: 2px; }
+  .person-progress { margin-left: auto; text-align: right; }
+  .progress-bar { width: 120px; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; margin-top: 4px; }
+  .progress-fill { height: 100%; background: #E8711A; border-radius: 3px; transition: width 0.3s; }
+  .progress-label { font-size: 0.7rem; color: #6b7280; }
+
+  .legend { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; font-size: 0.72rem; color: #6b7280; }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-dot { width: 14px; height: 14px; border-radius: 3px; border: 1.5px solid; display: flex; align-items: center; justify-content: center; font-size: 0.55rem; font-weight: 700; }
+
+  .calendar-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+  @media(max-width:900px){ .calendar-grid { grid-template-columns: repeat(2,1fr); } }
+  @media(max-width:600px){ .calendar-grid { grid-template-columns: 1fr; } }
+
+  .month-card { background: white; border-radius: 10px; padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .month-name { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #1B2A4A; margin-bottom: 0.6rem; }
+  .weekdays { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; margin-bottom: 4px; }
+  .weekday { font-size: 0.6rem; font-weight: 600; color: #9ca3af; text-align: center; padding: 2px 0; }
+  .weekday.thu { color: #1B2A4A; }
+  .days-row { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; }
+  .day { font-size: 0.72rem; text-align: center; padding: 4px 2px; border-radius: 4px; color: #d1d5db; border: 1.5px solid transparent; }
+  .day.thursday { color: #1B2A4A; border-color: #c7d2fe; background: #f0f4ff; cursor: pointer; font-weight: 600; }
+  .day.thursday:hover { background: #dde6ff; }
+  .day.thursday.selected { background: #E8711A; border-color: #E8711A; color: white; }
+  .day.thursday.blocked { color: #9ca3af; border-color: #e2e8f0; background: #f9fafb; cursor: not-allowed; }
+  .day.thursday.group-blocked { color: #b91c1c; border-color: #fecaca; background: #fef2f2; cursor: not-allowed; text-decoration: line-through; font-weight: 700; }
+  .day.thursday.group-blocked:hover { background: #fef2f2; }
+  .day.empty { visibility: hidden; }
+
+  .resumen-section { margin-top: 2rem; background: white; border-radius: 10px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .resumen-section h3 { font-size: 0.9rem; font-weight: 700; margin-bottom: 1rem; color: #1B2A4A; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+  th { text-align: left; padding: 0.4rem 0.6rem; color: #6b7280; font-weight: 600; font-size: 0.68rem; text-transform: uppercase; border-bottom: 2px solid #f0f2f5; }
+  td { padding: 0.45rem 0.6rem; border-bottom: 1px solid #f0f2f5; }
+  tr:last-child td { border-bottom: none; }
+  .pill { font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+  .pill-green { background: #d1fae5; color: #065f46; }
+  .pill-orange { background: #ffedd5; color: #c25a0e; }
+  .pill-gray { background: #f3f4f6; color: #6b7280; }
+
+  .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: #1B2A4A; color: white; padding: 0.7rem 1.2rem; border-radius: 8px; font-size: 0.8rem; opacity: 0; transform: translateY(10px); transition: all 0.3s; pointer-events: none; z-index: 999; }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; gap: 1rem; }
+  .loading-overlay p { color: #6b7280; font-size: 0.9rem; }
+  .spinner { width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #E8711A; border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <p>Conectando con Firebase...</p>
+</div>
+
+<header>
+  <div>
+    <h1>🌴 Vacaciones BNI 2026</h1>
+    <p>Selecciona tus jueves de ausencia (máx. 2)</p>
+  </div>
+  <span class="header-badge">BNI Logroño</span>
+  <div class="sync-status">
+    <div class="sync-dot syncing" id="syncDot"></div>
+    <span id="syncLabel">Conectando...</span>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-title">Miembros</div>
+    <div class="member-list" id="memberList"></div>
+  </aside>
+  <main class="main">
+    <div class="person-header" id="personHeader"></div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#f0f4ff;border-color:#c7d2fe;color:#1B2A4A">J</div> Jueves disponible</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#E8711A;border-color:#E8711A;color:white">J</div> Seleccionado</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f9fafb;border-color:#e2e8f0;color:#9ca3af">J</div> No disponible (límite)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fef2f2;border-color:#fecaca;text-decoration:line-through;color:#b91c1c;font-size:0.6rem;display:flex;align-items:center;justify-content:center;font-weight:700;">J</div> Vacaciones del grupo (no disponible)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f1f5f9;border-color:#f1f5f9;color:#d1d5db">·</div> Día no seleccionable</div>
+    </div>
+    <div class="calendar-grid" id="calendarGrid"></div>
+    <div class="resumen-section">
+      <h3>Resumen del grupo</h3>
+      <table>
+        <thead><tr><th>#</th><th>Nombre</th><th>Estado</th><th>Fechas elegidas</th><th>Pendiente</th></tr></thead>
+        <tbody id="resumenBody"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDL0RCmHreNd1y4myiBMRzakIkTofupnoQ",
+  authDomain: "vacaciones-bni.firebaseapp.com",
+  databaseURL: "https://vacaciones-bni-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "vacaciones-bni",
+  storageBucket: "vacaciones-bni.firebasestorage.app",
+  messagingSenderId: "431091618306",
+  appId: "1:431091618306:web:3ce42629a6cc5f29cc8d1b"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// ── CONFIGURACIÓN ──────────────────────────────────────────────
+const MAX_DAYS = 2;
+
+// Jueves bloqueados del grupo (vacaciones colectivas de agosto)
+const BLOCKED_GROUP = new Set(['2026-08-6','2026-08-13','2026-08-20']);
+
+const MEMBERS = [
+  { id: 'm01', dc: '01', nombre: 'Jesús', apellidos: 'Leiva', sector: 'Valoración' },
+  { id: 'm02', dc: '02', nombre: 'Ana', apellidos: 'García', sector: 'Notaría' },
+  { id: 'm03', dc: '03', nombre: 'Carlos', apellidos: 'Martínez', sector: 'Abogado' },
+  { id: 'm04', dc: '04', nombre: 'María', apellidos: 'López', sector: 'Gestoría' },
+  { id: 'm05', dc: '05', nombre: 'Pedro', apellidos: 'Sánchez', sector: 'Banca' },
+  { id: 'm06', dc: '06', nombre: 'Laura', apellidos: 'Fernández', sector: 'Inmobiliaria' },
+  { id: 'm07', dc: '07', nombre: 'Miguel', apellidos: 'Rodríguez', sector: 'Seguros' },
+  { id: 'm08', dc: '08', nombre: 'Isabel', apellidos: 'González', sector: 'Asesoría' },
+  { id: 'm09', dc: '09', nombre: 'Antonio', apellidos: 'Díaz', sector: 'Arquitectura' },
+  { id: 'm10', dc: '10', nombre: 'Carmen', apellidos: 'Ruiz', sector: 'Consultoría' },
+  { id: 'm11', dc: '11', nombre: 'José', apellidos: 'Moreno', sector: 'Fiscal' },
+  { id: 'm12', dc: '12', nombre: 'Pilar', apellidos: 'Jiménez', sector: 'RRHH' },
+  { id: 'm13', dc: '13', nombre: 'Francisco', apellidos: 'Álvarez', sector: 'Marketing' },
+  { id: 'm14', dc: '14', nombre: 'Rosa', apellidos: 'Romero', sector: 'Logística' },
+  { id: 'm15', dc: '15', nombre: 'Manuel', apellidos: 'Torres', sector: 'Informática' },
+  { id: 'm16', dc: '16', nombre: 'Lucía', apellidos: 'Ramos', sector: 'Diseño' },
+  { id: 'm17', dc: '17', nombre: 'Javier', apellidos: 'Herrera', sector: 'Construcción' },
+  { id: 'm18', dc: '18', nombre: 'Elena', apellidos: 'Castro', sector: 'Salud' },
+  { id: 'm19', dc: '19', nombre: 'David', apellidos: 'Ortega', sector: 'Formación' },
+  { id: 'm20', dc: '20', nombre: 'Marta', apellidos: 'Rubio', sector: 'Comercio' },
+  { id: 'm21', dc: '21', nombre: 'Sergio', apellidos: 'Molina', sector: 'Transporte' },
+  { id: 'm22', dc: '22', nombre: 'Beatriz', apellidos: 'Navarro', sector: 'Publicidad' },
+];
+
+const MONTHS = [
+  { num: 1,  name: 'Enero' },   { num: 2,  name: 'Febrero' },
+  { num: 3,  name: 'Marzo' },   { num: 4,  name: 'Abril' },
+  { num: 5,  name: 'Mayo' },    { num: 6,  name: 'Junio' },
+  { num: 7,  name: 'Julio' },   { num: 8,  name: 'Agosto' },
+  { num: 9,  name: 'Septiembre' },{ num: 10, name: 'Octubre' },
+  { num: 11, name: 'Noviembre' },{ num: 12, name: 'Diciembre' },
+];
+
+// ── ESTADO LOCAL ────────────────────────────────────────────────
+let currentMember = MEMBERS[0];
+let allData = {}; // { memberId: ['2026-03-05', ...] }
+
+// ── FIREBASE ────────────────────────────────────────────────────
+const dataRef = ref(db, 'vacaciones2026');
+
+// Escuchar cambios en tiempo real
+onValue(dataRef, (snapshot) => {
+  allData = snapshot.val() || {};
+  setSyncStatus('online');
+  hideLoading();
+  render();
+}, (error) => {
+  console.error('Firebase error:', error);
+  setSyncStatus('offline');
+  hideLoading();
+});
+
+function saveMemberDays(memberId, days) {
+  setSyncStatus('syncing');
+  const memberRef = ref(db, `vacaciones2026/${memberId}`);
+  set(memberRef, days.length > 0 ? days : null)
+    .then(() => setSyncStatus('online'))
+    .catch(() => setSyncStatus('offline'));
+}
+
+function getMemberDays(memberId) {
+  return allData[memberId] || [];
+}
+
+// ── UI HELPERS ──────────────────────────────────────────────────
+function setSyncStatus(status) {
+  const dot = document.getElementById('syncDot');
+  const label = document.getElementById('syncLabel');
+  dot.className = 'sync-dot';
+  if (status === 'online')  { dot.classList.add(''); label.textContent = 'Sincronizado'; dot.style.background='#4ade80'; }
+  if (status === 'offline') { dot.style.background='#f87171'; label.textContent = 'Sin conexión'; }
+  if (status === 'syncing') { dot.classList.add('syncing'); dot.style.background='#fbbf24'; label.textContent = 'Guardando...'; }
+}
+
+function hideLoading() {
+  document.getElementById('loadingOverlay').style.display = 'none';
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function initials(m) {
+  return (m.nombre[0] + m.apellidos[0]).toUpperCase();
+}
+
+function formatDate(y, mo, d) {
+  return new Date(y, mo, d).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+}
+
+// ── RENDER ───────────────────────────────────────────────────────
+function renderSidebar() {
+  const list = document.getElementById('memberList');
+  list.innerHTML = '';
+  MEMBERS.forEach(m => {
+    const days = getMemberDays(m.id);
+    const item = document.createElement('div');
+    item.className = 'member-item' + (m.id === currentMember.id ? ' active' : '');
+    item.innerHTML = `
+      <div class="member-avatar">${initials(m)}</div>
+      <div class="member-name">
+        <strong>${m.nombre} ${m.apellidos}</strong>
+        <span>${m.sector}</span>
+      </div>
+      <div class="member-dots">
+        <div class="dot ${days.length >= 1 ? 'filled' : ''}"></div>
+        <div class="dot ${days.length >= 2 ? 'filled' : ''}"></div>
+      </div>`;
+    item.addEventListener('click', () => { currentMember = m; render(); });
+    list.appendChild(item);
+  });
+}
+
+function renderPersonHeader() {
+  const days = getMemberDays(currentMember.id);
+  const pct = (days.length / MAX_DAYS) * 100;
+  document.getElementById('personHeader').innerHTML = `
+    <div class="person-avatar-lg">${initials(currentMember)}</div>
+    <div class="person-info">
+      <h2>${currentMember.nombre} ${currentMember.apellidos}</h2>
+      <p>${currentMember.sector} · DC ${currentMember.dc}</p>
+    </div>
+    <div class="person-progress">
+      <div class="progress-label">${days.length} de ${MAX_DAYS} jueves elegidos</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    </div>`;
+}
+
+function renderCalendar() {
+  const grid = document.getElementById('calendarGrid');
+  grid.innerHTML = '';
+  const memberDays = getMemberDays(currentMember.id);
+  const used = memberDays.length;
+
+  MONTHS.forEach(({ num, name }) => {
+    const card = document.createElement('div');
+    card.className = 'month-card';
+    const firstDay = new Date(2026, num - 1, 1).getDay(); // 0=dom
+    const startOffset = (firstDay + 6) % 7; // lunes=0
+    const daysInMonth = new Date(2026, num, 0).getDate();
+
+    const WEEK = ['L','M','X','J','V','S','D'];
+    let daysHTML = '';
+    for (let i = 0; i < startOffset; i++) daysHTML += `<div class="day empty"></div>`;
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(2026, num - 1, d);
+      const dow = date.getDay(); // 0=dom, 4=jue
+      const isThu = dow === 4;
+      const key = `2026-${num}-${d}`;
+      const isSelected = memberDays.includes(key);
+      const isGroupBlocked = BLOCKED_GROUP.has(key);
+      const isBlocked = !isSelected && (used >= MAX_DAYS || isGroupBlocked);
+      if (isThu) {
+        const cls = isGroupBlocked ? 'thursday group-blocked'
+          : isSelected ? 'thursday selected'
+          : isBlocked ? 'thursday blocked'
+          : 'thursday';
+        daysHTML += `<div class="day ${cls}" data-key="${key}" ${isGroupBlocked ? 'title="Vacaciones del grupo BNI"' : ''}>${d}</div>`;
+      } else {
+        daysHTML += `<div class="day${isThu?'':''}">${isThu ? d : '<span style="color:#d1d5db;font-size:0.65rem">'+d+'</span>'}</div>`;
+      }
+    }
+
+    card.innerHTML = `
+      <div class="month-name">${name}</div>
+      <div class="weekdays">${WEEK.map(w => `<div class="weekday${w==='J'?' thu':''}">${w}</div>`).join('')}</div>
+      <div class="days-row">${daysHTML}</div>`;
+
+    card.querySelectorAll('.thursday:not(.blocked):not(.group-blocked)').forEach(el => {
+      el.addEventListener('click', () => {
+        const key = el.dataset.key;
+        let days = [...getMemberDays(currentMember.id)];
+        if (days.includes(key)) {
+          days = days.filter(k => k !== key);
+          showToast('Día eliminado.');
+        } else {
+          if (days.length >= MAX_DAYS) { showToast('Ya tienes 2 jueves seleccionados.'); return; }
+          days.push(key);
+          days.sort();
+          showToast('✅ Jueves anotado en Firebase.');
+        }
+        allData[currentMember.id] = days;
+        saveMemberDays(currentMember.id, days);
+        render();
+      });
+    });
+
+    grid.appendChild(card);
+  });
+}
+
+function renderResumen() {
+  const tbody = document.getElementById('resumenBody');
+  tbody.innerHTML = '';
+  MEMBERS.forEach((m, i) => {
+    const days = getMemberDays(m.id);
+    const pending = MAX_DAYS - days.length;
+    const fechas = days.map(k => {
+      const parts = k.split('-');
+      return formatDate(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    }).join(', ');
+    const pillClass = days.length === MAX_DAYS ? 'pill-green' : days.length > 0 ? 'pill-orange' : 'pill-gray';
+    tbody.innerHTML += `
+      <tr>
+        <td style="color:#9ca3af">${m.dc}</td>
+        <td><strong>${m.nombre}</strong> ${m.apellidos}</td>
+        <td><span class="pill ${pillClass}">${days.length} / ${MAX_DAYS}</span></td>
+        <td style="color:#6b7280;font-size:0.72rem">${fechas || '—'}</td>
+        <td style="color:${pending===0?'#065f46':'#c25a0e'};font-weight:600">${pending === 0 ? '✓ Completo' : `${pending} pendiente${pending>1?'s':''}`}</td>
+      </tr>`;
+  });
+}
+
+function render() {
+  renderSidebar();
+  renderPersonHeader();
+  renderCalendar();
+  renderResumen();
+}
+</script>
+</body>
+</html>
