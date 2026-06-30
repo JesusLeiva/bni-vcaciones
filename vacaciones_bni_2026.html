@@ -228,7 +228,7 @@ function setSyncStatus(status) {
   const dot = document.getElementById('syncDot');
   const label = document.getElementById('syncLabel');
   dot.className = 'sync-dot';
-  if (status === 'online')  { dot.classList.add(''); label.textContent = 'Sincronizado'; dot.style.background='#4ade80'; }
+  if (status === 'online')  { label.textContent = 'Sincronizado'; dot.style.background='#4ade80'; }
   if (status === 'offline') { dot.style.background='#f87171'; label.textContent = 'Sin conexión'; }
   if (status === 'syncing') { dot.classList.add('syncing'); dot.style.background='#fbbf24'; label.textContent = 'Guardando...'; }
 }
@@ -387,3 +387,4 @@ function render() {
 </script>
 </body>
 </html>
+
